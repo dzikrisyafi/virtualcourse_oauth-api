@@ -12,10 +12,10 @@ import (
 var (
 	client *sql.DB
 
-	username = os.Getenv("mysql_users_username")
-	password = os.Getenv("mysql_users_password")
-	host     = os.Getenv("mysql_users_host")
-	schema   = os.Getenv("mysql_users_schema1")
+	username = os.Getenv("mysql_username")
+	password = os.Getenv("mysql_password")
+	host     = os.Getenv("mysql_host")
+	schema   = os.Getenv("mysql_schema1")
 )
 
 func init() {

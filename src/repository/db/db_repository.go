@@ -5,6 +5,7 @@ import (
 
 	"github.com/dzikrisyafi/kursusvirtual_oauth-api/src/clients/mysql"
 	"github.com/dzikrisyafi/kursusvirtual_oauth-api/src/domain/access_token"
+	"github.com/dzikrisyafi/kursusvirtual_oauth-api/src/logger"
 	"github.com/dzikrisyafi/kursusvirtual_oauth-api/src/utils/errors"
 )
 
@@ -18,6 +19,7 @@ type DbRepository interface {
 	GetById(string) (*access_token.AccessToken, *errors.RestErr)
 	Create(access_token.AccessToken) *errors.RestErr
 	UpdateExpirationTime(access_token.AccessToken) *errors.RestErr
+	GetAccessToken(int64) *errors.RestErr
 }
 
 type dbRepository struct {
@@ -30,7 +32,8 @@ func NewRepository() DbRepository {
 func (r *dbRepository) GetById(ID string) (*access_token.AccessToken, *errors.RestErr) {
 	stmt, err := mysql.DbConn().Prepare(queryGetAccessToken)
 	if err != nil {
-		return nil, errors.NewInternalServerError(err.Error())
+		logger.Error("error when trying to prepare get token by id statement", err)
+		return nil, errors.NewInternalServerError("database error")
 	}
 	defer stmt.Close()
 
@@ -40,7 +43,8 @@ func (r *dbRepository) GetById(ID string) (*access_token.AccessToken, *errors.Re
 		if strings.Contains(getErr.Error(), "no rows") {
 			return nil, errors.NewNotFoundError("no access token found with given id")
 		}
-		return nil, errors.NewInternalServerError(getErr.Error())
+		logger.Error("error when trying to get token by id", err)
+		return nil, errors.NewInternalServerError("database error")
 	}
 
 	return &result, nil
@@ -49,11 +53,13 @@ func (r *dbRepository) GetById(ID string) (*access_token.AccessToken, *errors.Re
 func (r *dbRepository) Create(at access_token.AccessToken) *errors.RestErr {
 	stmt, err := mysql.DbConn().Prepare(queryCreateAccessToken)
 	if err != nil {
-		return errors.NewInternalServerError(err.Error())
+		logger.Error("error when trying to prepare create access token statement", err)
+		return errors.NewInternalServerError("database error")
 	}
 	defer stmt.Close()
 	if _, err = stmt.Exec(at.AccessToken, at.UserID, at.ClientID, at.Expires); err != nil {
-		return errors.NewInternalServerError(err.Error())
+		logger.Error("error when trying to create access token", err)
+		return errors.NewInternalServerError("database error")
 	}
 	return nil
 }
@@ -67,5 +73,9 @@ func (r *dbRepository) UpdateExpirationTime(at access_token.AccessToken) *errors
 	if _, err = stmt.Exec(at.Expires, at.AccessToken); err != nil {
 		return errors.NewInternalServerError(err.Error())
 	}
+	return nil
+}
+
+func (r *dbRepository) GetAccessToken(userID int64) *errors.RestErr {
 	return nil
 }
