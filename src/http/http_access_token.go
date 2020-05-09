@@ -5,7 +5,7 @@ import (
 
 	atDomain "github.com/dzikrisyafi/kursusvirtual_oauth-api/src/domain/access_token"
 	"github.com/dzikrisyafi/kursusvirtual_oauth-api/src/services/access_token"
-	"github.com/dzikrisyafi/kursusvirtual_users-api/utils/errors"
+	"github.com/dzikrisyafi/kursusvirtual_utils-go/rest_errors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,23 +27,26 @@ func NewAccessTokenHandler(service access_token.Service) AccessTokenHandler {
 func (handler *accessTokenHandler) GetById(c *gin.Context) {
 	accessToken, err := handler.service.GetById(c.Param("access_token_id"))
 	if err != nil {
-		c.JSON(err.Status, err)
+		c.JSON(err.Status(), err)
 		return
 	}
+
 	c.JSON(http.StatusOK, accessToken)
 }
 
 func (handler *accessTokenHandler) Create(c *gin.Context) {
 	var request atDomain.AccessTokenRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		restErr := errors.NewBadRequestError("invalid json body")
-		c.JSON(restErr.Status, restErr)
+		restErr := rest_errors.NewBadRequestError("invalid json body")
+		c.JSON(restErr.Status(), restErr)
 		return
 	}
+
 	accessToken, err := handler.service.Create(request)
 	if err != nil {
-		c.JSON(err.Status, err)
+		c.JSON(err.Status(), err)
 		return
 	}
+
 	c.JSON(http.StatusCreated, accessToken)
 }
