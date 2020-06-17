@@ -11,15 +11,17 @@ import (
 )
 
 const (
-	queryGetAccessToken    = "SELECT access_token, user_id, client_id, expires FROM access_tokens WHERE access_token=?;"
-	queryCreateAccessToken = "INSERT INTO access_tokens(access_token, user_id, client_id, expires) VALUES(?, ?, ?, ?);"
-	queryUpdateExpires     = "UPDATE access_tokens SET expires=? WHERE access_token=?;"
+	queryGetAccessToken    = `SELECT access_token, user_id, client_id, expires FROM access_tokens WHERE access_token=?;`
+	queryCreateAccessToken = `INSERT INTO access_tokens(access_token, user_id, client_id, expires) VALUES(?, ?, ?, ?);`
+	queryUpdateExpires     = `UPDATE access_tokens SET expires=? WHERE access_token=?;`
+	queryDeleteAccessToken = `DELETE FROM access_tokens WHERE access_token=?;`
 )
 
 type DbRepository interface {
 	GetById(string) (*access_token.AccessToken, rest_errors.RestErr)
 	Create(access_token.AccessToken) rest_errors.RestErr
 	UpdateExpirationTime(access_token.AccessToken) rest_errors.RestErr
+	DeleteAccessToken(string) rest_errors.RestErr
 }
 
 type dbRepository struct {
@@ -62,6 +64,7 @@ func (r *dbRepository) Create(at access_token.AccessToken) rest_errors.RestErr {
 		logger.Error("error when trying to create access token", err)
 		return rest_errors.NewInternalServerError("error when trying to create access token", errors.New("database error"))
 	}
+
 	return nil
 }
 
@@ -77,5 +80,22 @@ func (r *dbRepository) UpdateExpirationTime(at access_token.AccessToken) rest_er
 		logger.Error("error when trying to update access token", err)
 		return rest_errors.NewInternalServerError("error when trying to update access token", errors.New("database error"))
 	}
+
+	return nil
+}
+
+func (r *dbRepository) DeleteAccessToken(ID string) rest_errors.RestErr {
+	stmt, err := mysql.DbConn().Prepare(queryDeleteAccessToken)
+	if err != nil {
+		logger.Error("error when trying to delete access token", err)
+		return rest_errors.NewInternalServerError("error when trying to delete access token", errors.New("database error"))
+	}
+	defer stmt.Close()
+
+	if _, err := stmt.Exec(ID); err != nil {
+		logger.Error("error when trying to delete access token", err)
+		return rest_errors.NewInternalServerError("error when trying to delete access token", errors.New("database error"))
+	}
+
 	return nil
 }

@@ -18,7 +18,9 @@ func StartApplication() {
 
 	router.GET("/oauth/access_token/:access_token_id", atHandler.GetById)
 	router.POST("/oauth/access_token", atHandler.Create)
+	router.PUT("/oauth/access_token/:access_token_id", atHandler.Update)
+	router.DELETE("/oauth/access_token/:access_token_id", atHandler.Delete)
 
 	logger.Info("start the application...")
-	router.Run(":8001")
+	router.Run(":8000")
 }

@@ -12,6 +12,8 @@ import (
 type AccessTokenHandler interface {
 	GetById(*gin.Context)
 	Create(*gin.Context)
+	Update(*gin.Context)
+	Delete(*gin.Context)
 }
 
 type accessTokenHandler struct {
@@ -49,4 +51,24 @@ func (handler *accessTokenHandler) Create(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, accessToken)
+}
+
+func (handler *accessTokenHandler) Update(c *gin.Context) {
+	var at atDomain.AccessToken
+	at.AccessToken = c.Param("access_token_id")
+	if err := handler.service.UpdateExpirationTime(at); err != nil {
+		c.JSON(err.Status(), err)
+		return
+	}
+
+	c.JSON(http.StatusOK, map[string]interface{}{"message": "success updated access token", "status": http.StatusOK})
+}
+
+func (handler *accessTokenHandler) Delete(c *gin.Context) {
+	if err := handler.service.DeleteAccessToken(c.Param("access_token_id")); err != nil {
+		c.JSON(err.Status(), err)
+		return
+	}
+
+	c.JSON(http.StatusOK, map[string]interface{}{"message": "success deleted access token", "status": http.StatusOK})
 }

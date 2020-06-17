@@ -2,6 +2,7 @@ package access_token
 
 import (
 	"strings"
+	"time"
 
 	"github.com/dzikrisyafi/kursusvirtual_oauth-api/src/domain/access_token"
 	"github.com/dzikrisyafi/kursusvirtual_oauth-api/src/repository/db"
@@ -13,6 +14,7 @@ type Service interface {
 	GetById(string) (*access_token.AccessToken, rest_errors.RestErr)
 	Create(access_token.AccessTokenRequest) (*access_token.AccessToken, rest_errors.RestErr)
 	UpdateExpirationTime(access_token.AccessToken) rest_errors.RestErr
+	DeleteAccessToken(string) rest_errors.RestErr
 }
 
 type service struct {
@@ -71,9 +73,21 @@ func (s *service) Create(request access_token.AccessTokenRequest) (*access_token
 }
 
 func (s *service) UpdateExpirationTime(at access_token.AccessToken) rest_errors.RestErr {
-	if err := at.Validate(); err != nil {
-		return err
+	if at.AccessToken == "" {
+		restErr := rest_errors.NewBadRequestError("invalid access token id")
+		return restErr
 	}
 
+	at.Expires = int(time.Now().UTC().Add(24 * time.Hour).Unix())
+
 	return s.dbRepository.UpdateExpirationTime(at)
+}
+
+func (s *service) DeleteAccessToken(accessTokenID string) rest_errors.RestErr {
+	accessTokenID = strings.TrimSpace(accessTokenID)
+	if len(accessTokenID) == 0 {
+		return rest_errors.NewBadRequestError("invalid access token id")
+	}
+
+	return s.dbRepository.DeleteAccessToken(accessTokenID)
 }
