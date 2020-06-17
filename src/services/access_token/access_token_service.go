@@ -66,6 +66,7 @@ func (s *service) Create(request access_token.AccessTokenRequest) (*access_token
 	if err := s.dbRepository.Create(at); err != nil {
 		return nil, err
 	}
+
 	return &at, nil
 }
 

@@ -1,7 +1,6 @@
 package app
 
 import (
-	"github.com/dzikrisyafi/kursusvirtual_oauth-api/src/clients/mysql"
 	"github.com/dzikrisyafi/kursusvirtual_oauth-api/src/http"
 	"github.com/dzikrisyafi/kursusvirtual_oauth-api/src/repository/db"
 	"github.com/dzikrisyafi/kursusvirtual_oauth-api/src/repository/rest"
@@ -15,12 +14,6 @@ var (
 )
 
 func StartApplication() {
-	err := mysql.DbConn().Ping()
-	if err != nil {
-		panic(err)
-	}
-	defer mysql.DbConn().Close()
-
 	atHandler := http.NewAccessTokenHandler(access_token.NewService(rest.NewRestUsersRepository(), db.NewRepository()))
 
 	router.GET("/oauth/access_token/:access_token_id", atHandler.GetById)

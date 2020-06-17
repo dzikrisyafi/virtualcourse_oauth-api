@@ -29,6 +29,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
 	if err = client.Ping(); err != nil {
 		panic(err)
 	}

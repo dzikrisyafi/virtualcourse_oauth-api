@@ -42,9 +42,9 @@ func (at *AccessTokenRequest) Validate() rest_errors.RestErr {
 
 type AccessToken struct {
 	AccessToken string `json:"access_token"`
-	UserID      int64  `json:"user_id"`
-	ClientID    int64  `json:"client_id"`
-	Expires     int64  `json:"expires"`
+	UserID      int    `json:"user_id"`
+	ClientID    int    `json:"client_id"`
+	Expires     int    `json:"expires"`
 }
 
 func (at *AccessToken) Validate() rest_errors.RestErr {
@@ -64,15 +64,15 @@ func (at *AccessToken) Validate() rest_errors.RestErr {
 	return nil
 }
 
-func GetNewAccessToken(userID int64) AccessToken {
+func GetNewAccessToken(userID int) AccessToken {
 	return AccessToken{
 		UserID:  userID,
-		Expires: time.Now().UTC().Add(expirationTime * time.Hour).Unix(),
+		Expires: int(time.Now().UTC().Add(expirationTime * time.Hour).Unix()),
 	}
 }
 
 func (at AccessToken) IsExpired() bool {
-	return time.Unix(at.Expires, 0).Before(time.Now().UTC())
+	return time.Unix(int64(at.Expires), 0).Before(time.Now().UTC())
 }
 
 func (at *AccessToken) Generate() {
