@@ -16,7 +16,7 @@ var (
 	username = os.Getenv("mysql_username")
 	password = os.Getenv("mysql_password")
 	host     = os.Getenv("mysql_host")
-	schema   = os.Getenv("mysql_schema1")
+	schema   = os.Getenv("oauth_db")
 )
 
 func init() {
