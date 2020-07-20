@@ -16,7 +16,11 @@ var (
 
 func StartApplication() {
 	atHandler := http.NewAccessTokenHandler(access_token.NewService(rest.NewRestUsersRepository(), db.NewRepository()))
-	router.Use(cors.Default())
+	router.Use(cors.New(cors.Config{
+		AllowAllOrigins: true,
+		AllowMethods:    []string{"OPTIONS", "GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:    []string{"Origin", "Content-Type", "Content-Length"},
+	}))
 
 	router.POST("/oauth/access_token", atHandler.Create)
 	router.GET("/oauth/access_token/:access_token_id", atHandler.GetById)
