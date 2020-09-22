@@ -42,9 +42,10 @@ func (at *AccessTokenRequest) Validate() rest_errors.RestErr {
 
 type AccessToken struct {
 	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	Expires     int    `json:"expires_in"`
 	UserID      int    `json:"user_id"`
-	ClientID    int    `json:"client_id"`
-	Expires     int    `json:"expires"`
+	ClientID    string `json:"client_id"`
 }
 
 func (at *AccessToken) Validate() rest_errors.RestErr {
@@ -57,8 +58,12 @@ func (at *AccessToken) Validate() rest_errors.RestErr {
 		return rest_errors.NewBadRequestError("invalid user id")
 	}
 
-	if at.ClientID <= 0 {
+	if at.ClientID == "" {
 		return rest_errors.NewBadRequestError("invalid client id")
+	}
+
+	if at.TokenType == "" {
+		return rest_errors.NewBadRequestError("invalid token type")
 	}
 
 	if at.Expires <= 0 {
@@ -68,10 +73,12 @@ func (at *AccessToken) Validate() rest_errors.RestErr {
 	return nil
 }
 
-func GetNewAccessToken(userID int) AccessToken {
+func GetNewAccessToken(userID int, clientID string) AccessToken {
 	return AccessToken{
-		UserID:  userID,
-		Expires: int(time.Now().UTC().Add(expirationTime * time.Hour).Unix()),
+		UserID:    userID,
+		ClientID:  crypto_utils.GetSha256(clientID),
+		TokenType: "Bearer",
+		Expires:   int(time.Now().UTC().Add(expirationTime * time.Hour).Unix()),
 	}
 }
 
@@ -79,6 +86,10 @@ func (at AccessToken) IsExpired() bool {
 	return time.Unix(int64(at.Expires), 0).Before(time.Now().UTC())
 }
 
-func (at *AccessToken) Generate() {
+func (at *AccessToken) GenerateByUserID() {
 	at.AccessToken = crypto_utils.GetSha256(fmt.Sprintf("at-%d-%d-ran", at.UserID, at.Expires))
+}
+
+func (at *AccessToken) GenerateByClientID() {
+	at.AccessToken = crypto_utils.GetSha256(fmt.Sprintf("at-%s-%d-ran", at.ClientID, at.Expires))
 }

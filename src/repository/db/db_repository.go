@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	queryGetAccessToken    = `SELECT access_token, user_id, client_id, expires FROM access_tokens WHERE access_token=?;`
-	queryCreateAccessToken = `INSERT INTO access_tokens(access_token, user_id, client_id, expires) VALUES(?, ?, ?, ?);`
+	queryGetAccessToken    = `SELECT access_token, user_id, client_id, expires, token_type FROM access_tokens WHERE access_token=?;`
+	queryCreateAccessToken = `INSERT INTO access_tokens(access_token, user_id, client_id, expires, token_type) VALUES(?, ?, ?, ?, ?);`
 	queryUpdateExpires     = `UPDATE access_tokens SET expires=? WHERE access_token=?;`
 	queryDeleteAccessToken = `DELETE FROM access_tokens WHERE access_token=?;`
 )
@@ -41,7 +41,7 @@ func (r *dbRepository) GetById(ID string) (*access_token.AccessToken, rest_error
 
 	var result access_token.AccessToken
 	row := stmt.QueryRow(ID)
-	if getErr := row.Scan(&result.AccessToken, &result.UserID, &result.ClientID, &result.Expires); getErr != nil {
+	if getErr := row.Scan(&result.AccessToken, &result.UserID, &result.ClientID, &result.Expires, &result.TokenType); getErr != nil {
 		if strings.Contains(getErr.Error(), "no rows") {
 			return nil, rest_errors.NewNotFoundError("no access token found with given id")
 		}
@@ -60,7 +60,7 @@ func (r *dbRepository) Create(at access_token.AccessToken) rest_errors.RestErr {
 	}
 	defer stmt.Close()
 
-	if _, err = stmt.Exec(at.AccessToken, at.UserID, at.ClientID, at.Expires); err != nil {
+	if _, err = stmt.Exec(at.AccessToken, at.UserID, at.ClientID, at.Expires, at.TokenType); err != nil {
 		logger.Error("error when trying to create access token", err)
 		return rest_errors.NewInternalServerError("error when trying to create access token", errors.New("database error"))
 	}

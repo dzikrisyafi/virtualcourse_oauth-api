@@ -10,8 +10,9 @@ import (
 	"github.com/dzikrisyafi/kursusvirtual_utils-go/rest_errors"
 )
 
+// Service mocking every functions in access token service
 type Service interface {
-	GetById(string) (*access_token.AccessToken, rest_errors.RestErr)
+	GetByID(string) (*access_token.AccessToken, rest_errors.RestErr)
 	Create(access_token.AccessTokenRequest) (*access_token.AccessToken, rest_errors.RestErr)
 	UpdateExpirationTime(access_token.AccessToken) rest_errors.RestErr
 	DeleteAccessToken(string) rest_errors.RestErr
@@ -22,6 +23,7 @@ type service struct {
 	dbRepository  db.DbRepository
 }
 
+// NewService handling repository for data transfer
 func NewService(usersRepo rest.RestUsersRepository, dbRepo db.DbRepository) Service {
 	return &service{
 		restUsersRepo: usersRepo,
@@ -29,7 +31,8 @@ func NewService(usersRepo rest.RestUsersRepository, dbRepo db.DbRepository) Serv
 	}
 }
 
-func (s *service) GetById(accessTokenID string) (*access_token.AccessToken, rest_errors.RestErr) {
+// Get access token id from database server
+func (s *service) GetByID(accessTokenID string) (*access_token.AccessToken, rest_errors.RestErr) {
 	accessTokenID = strings.TrimSpace(accessTokenID)
 	if len(accessTokenID) == 0 {
 		return nil, rest_errors.NewBadRequestError("invalid access token id")
@@ -52,17 +55,32 @@ func (s *service) Create(request access_token.AccessTokenRequest) (*access_token
 		return nil, err
 	}
 
-	// TODO: Support both grant type: client_credentials and password
+	// Support both grant type: client_credentials and password
+	var at access_token.AccessToken
+	if request.GrantType == "password" {
+		// Authenticate the user against the Users API
+		user, err := s.restUsersRepo.LoginUser(request.Username, request.Password)
+		if err != nil {
+			return nil, err
+		}
 
-	// Authenticate the user against the Users API
-	user, err := s.restUsersRepo.LoginUser(request.Username, request.Password)
-	if err != nil {
-		return nil, err
+		// Generate a new access token by user id
+		at = access_token.GetNewAccessToken(user.ID, request.ClientID)
+		at.GenerateByUserID()
+
+		if at.Validate(); err != nil {
+			return nil, err
+		}
+	} else {
+		// Generate a new access token by client id
+		at = access_token.GetNewAccessToken(0, request.ClientID)
+		at.GenerateByClientID()
+
+		if at.ClientID == "" {
+			restErr := rest_errors.NewBadRequestError("invalid client id")
+			return nil, restErr
+		}
 	}
-
-	// Generate a new access token
-	at := access_token.GetNewAccessToken(user.ID)
-	at.Generate()
 
 	// Save the new access token in mysql
 	if err := s.dbRepository.Create(at); err != nil {

@@ -27,13 +27,13 @@ func NewAccessTokenHandler(service access_token.Service) AccessTokenHandler {
 }
 
 func (handler *accessTokenHandler) GetById(c *gin.Context) {
-	accessToken, err := handler.service.GetById(c.Param("access_token_id"))
+	accessToken, err := handler.service.GetByID(c.Param("access_token_id"))
 	if err != nil {
 		c.JSON(err.Status(), err)
 		return
 	}
 
-	c.JSON(http.StatusOK, accessToken)
+	c.JSON(http.StatusOK, accessToken.Marshall())
 }
 
 func (handler *accessTokenHandler) Create(c *gin.Context) {
@@ -50,7 +50,7 @@ func (handler *accessTokenHandler) Create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, accessToken)
+	c.JSON(http.StatusCreated, accessToken.Marshall())
 }
 
 func (handler *accessTokenHandler) Update(c *gin.Context) {
