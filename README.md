@@ -1,1 +1,1 @@
-# kursusvirtual_oauth-api
+# OAuth-API-Service
